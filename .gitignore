@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+ENV/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Solver output (PuLP temp files)
+*.mps
+*.mst
+*.sol
+solver_debug.log
+
+# FetchData cache
+FetchData/*.sqlite
+
+# Environment files
+.env
+.envrc
+
+# AI/Agent prompts (local development)
+.github/prompts/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

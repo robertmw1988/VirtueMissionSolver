@@ -1,0 +1,309 @@
+missions:
+  CHICKEN_NINE:
+    missionLevel: 2
+  CHICKEN_HEAVY:
+    missionLevel: 3
+  BCR:
+    missionLevel: 4
+  MILLENIUM_CHICKEN:
+    missionLevel: 4
+  CORELLIHEN_CORVETTE:
+    missionLevel: 4
+  GALEGGTICA:
+    missionLevel: 5
+  CHICKFIANT:
+    missionLevel: 5
+  VOYEGGER:
+    missionLevel: 6
+  HENERPRISE:
+    missionLevel: 8
+  ATREGGIES:
+    missionLevel: 8
+Epic Researches:
+  FTL Drive Upgrades:
+    level: 60
+    effect: 0.01
+    maxLevel: 60
+  Zero-G Quantum Containment:
+    level: 10
+    effect: 0.05
+    maxLevel: 10
+constraints:
+  fuelTankCapacity: 500T
+  maxTime: 360.0
+costFunctionWeights:
+  artifactGain: 23.8
+  fuelEfficiencyScale: 1.0
+  fuelEfficiencyPower: 0.0
+  timeEfficiencyScale: 1.0
+  timeEfficiencyPower: 0.0
+  wasteEfficiencyScale: 1.0
+  wasteEfficiencyPower: 0.0
+craftedArtifactTargetWeights:
+  Eggceptional Aurelian brooch: 1.0
+  Jeweled Aurelian brooch: 0.0
+  Aurelian brooch: 0.0
+  Plain Aurelian brooch: 0.0
+  Glistening beak of Midas: 0.0
+  Jeweled beak of Midas: -1.0
+  Beak of Midas: -1.0
+  Dull beak of Midas: 0.0
+  Gilded book of Basan: 0.0
+  Fortified book of Basan: 0.0
+  Collectors book of Basan: 0.0
+  Book of Basan: 0.0
+  Meggnificent carved rainstick: 0.0
+  Ornate carved rainstick: 0.0
+  Carved rainstick: 0.0
+  Simple carved rainstick: 0.0
+  Eggceptional clarity stone: 0.0
+  Eggsquisite clarity stone: 0.0
+  Clarity stone: 0.0
+  Clarity stone fragment: 0.0
+  Beggspoke Demeters necklace: 0.0
+  Pristine Demeters necklace: 0.0
+  Jeweled Demeters necklace: 0.0
+  Simple Demeters necklace: 0.0
+  Flawless dilithium monocle: 0.0
+  Eggsacting dilithium monocle: 0.0
+  Precise dilithium monocle: 0.0
+  Dilithium monocle: 0.0
+  Brilliant dilithium stone: 0.0
+  Eggsquisite dilithium stone: 0.0
+  Dilithium stone: 0.0
+  Dilithium stone fragment: 0.0
+  Solid gold meteorite: 0.0
+  Enriched gold meteorite: 0.0
+  Tiny gold meteorite: 0.0
+  Jeweled gusset: 0.0
+  Distegguished gusset: 0.0
+  Ornate gusset: 0.0
+  Plain gusset: 0.0
+  Clairvoyant interstellar compass: 1.0
+  Precise interstellar compass: 0.0
+  Interstellar compass: 0.0
+  Miscalibrated interstellar compass: 0.0
+  Eggceptional life stone: 0.0
+  Good life stone: 0.0
+  Life stone: 0.0
+  Life stone fragment: 0.0
+  Brilliant light of Eggendil: 0.0
+  Glowing light of Eggendil: 0.0
+  Shimmering light of Eggendil: 0.0
+  Dim light of Eggendil: 0.0
+  Meggnificent lunar stone: 0.0
+  Eggsquisite lunar stone: 0.0
+  Lunar stone: 0.0
+  Lunar stone fragment: 0.0
+  Eggceptional lunar totem: 0.0
+  Powerful lunar totem: 0.0
+  Lunar totem: 0.0
+  Basic lunar totem: 0.0
+  Meggnificent Mercury's lens: 0.0
+  Precise Mercury's lens: 0.0
+  Mercury's lens: 0.0
+  Misaligned Mercury's lens: 0.0
+  Eggceptional neodymium medallion: 0.0
+  Precise neodymium medallion: 0.0
+  Neodymium medallion: 0.0
+  Weak neodymium medallion: 0.0
+  Blazing phoenix feather: 0.0
+  Brilliant phoenix feather: 0.0
+  Phoenix feather: 0.0
+  Tattered phoenix feather: 0.0
+  Radiant prophecy stone: 0.0
+  Eggsquisite prophecy stone: 0.0
+  Prophecy stone: 0.0
+  Prophecy stone fragment: 0.0
+  Unsolvable puzzle cube: 0.0
+  Mystical puzzle cube: 0.0
+  Puzzle cube: 0.0
+  Ancient puzzle cube: 0.0
+  Reggference quantum metronome: 0.0
+  Perfect quantum metronome: 0.0
+  Adequate quantum metronome: 0.0
+  Misaligned quantum metronome: 0.0
+  Meggnificent quantum stone: 0.0
+  Phased quantum stone: 0.0
+  Quantum stone: 0.0
+  Quantum stone fragment: 0.0
+  Flawless shell stone: 0.0
+  Eggsquisite shell stone: 0.0
+  Shell stone: 0.0
+  Shell stone fragment: 0.0
+  Eggquisite ship in a bottle: 0.0
+  Complex ship in a bottle: 0.0
+  Detailed ship in a bottle: 0.0
+  Ship in a bottle: 0.0
+  Solar titanium geogon: 0.0
+  Solar titanium bar: 0.0
+  Solar titanium ore: 0.0
+  Radiant soul stone: 0.0
+  Eggsquisite soul stone: 0.0
+  Soul stone: 0.0
+  Soul stone fragment: 0.0
+  Eggceptional tachyon deflector: 0.0
+  Robust tachyon deflector: 0.0
+  Tachyon deflector: 0.0
+  Weak tachyon deflector: 0.0
+  Brilliant tachyon stone: 0.0
+  Eggsquisite tachyon stone: 0.0
+  Tachyon stone: 0.0
+  Tachyon stone fragment: 0.0
+  Radiant Tau Ceti geode: 0.0
+  Glimmering Tau Ceti geode: 0.0
+  Tau Ceti geode piece: 0.0
+  Eggceptional terra stone: 0.0
+  Rich terra stone: 0.0
+  Terra stone: 0.0
+  Terra stone fragment: 0.0
+  Eggceptional chalice: 0.0
+  Jeweled chalice: 0.0
+  Polished chalice: 0.0
+  Plain chalice: 0.0
+  Reggference titanium actuator: 0.0
+  Precise titanium actuator: 0.0
+  Titanium actuator: 0.0
+  Inconsistent titanium actuator: 0.0
+  Brilliant tungsten ankh: 0.0
+  Polished tungsten ankh: 0.0
+  Tungsten ankh: 0.0
+  Crude tungsten ankh: 0.0
+  Prime vial of Martian dust: 0.0
+  Hermetic vial of Martian dust: 0.0
+  Vial of Martian dust: 0.0
+  Tiny vial of Martian dust: 0.0
+missionArtifactTargetWeights:
+  Eggceptional Aurelian brooch: 1.0
+  Jeweled Aurelian brooch: 1.0
+  Aurelian brooch: 1.0
+  Plain Aurelian brooch: 1.0
+  Glistening beak of Midas: 0.0
+  Jeweled beak of Midas: 0.0
+  Beak of Midas: 0.0
+  Dull beak of Midas: 0.0
+  Gilded book of Basan: 0.0
+  Fortified book of Basan: 0.0
+  Collectors book of Basan: 0.0
+  Book of Basan: 0.0
+  Meggnificent carved rainstick: 0.0
+  Ornate carved rainstick: 0.0
+  Carved rainstick: 0.0
+  Simple carved rainstick: 0.0
+  Eggceptional clarity stone: 0.0
+  Eggsquisite clarity stone: 0.0
+  Clarity stone: 0.0
+  Clarity stone fragment: 0.0
+  Beggspoke Demeters necklace: 0.0
+  Pristine Demeters necklace: 1.0
+  Jeweled Demeters necklace: 1.0
+  Simple Demeters necklace: 1.0
+  Flawless dilithium monocle: 0.0
+  Eggsacting dilithium monocle: 0.0
+  Precise dilithium monocle: 0.0
+  Dilithium monocle: 0.0
+  Brilliant dilithium stone: 0.0
+  Eggsquisite dilithium stone: 0.0
+  Dilithium stone: 0.0
+  Dilithium stone fragment: 0.0
+  Solid gold meteorite: 1.0
+  Enriched gold meteorite: 1.0
+  Tiny gold meteorite: 1.0
+  Jeweled gusset: 0.0
+  Distegguished gusset: 0.0
+  Ornate gusset: 0.0
+  Plain gusset: 0.0
+  Clairvoyant interstellar compass: 1.0
+  Precise interstellar compass: 1.0
+  Interstellar compass: 1.0
+  Miscalibrated interstellar compass: 1.0
+  Eggceptional life stone: 0.0
+  Good life stone: 0.0
+  Life stone: 0.0
+  Life stone fragment: 0.0
+  Brilliant light of Eggendil: 0.0
+  Glowing light of Eggendil: 0.0
+  Shimmering light of Eggendil: 0.0
+  Dim light of Eggendil: 0.0
+  Meggnificent lunar stone: 0.0
+  Eggsquisite lunar stone: 0.0
+  Lunar stone: 0.0
+  Lunar stone fragment: 0.0
+  Eggceptional lunar totem: 0.0
+  Powerful lunar totem: 0.0
+  Lunar totem: 0.0
+  Basic lunar totem: 0.0
+  Meggnificent Mercury's lens: 0.0
+  Precise Mercury's lens: 0.0
+  Mercury's lens: 0.0
+  Misaligned Mercury's lens: 0.0
+  Eggceptional neodymium medallion: 0.0
+  Precise neodymium medallion: 0.0
+  Neodymium medallion: 0.0
+  Weak neodymium medallion: 0.0
+  Blazing phoenix feather: 0.0
+  Brilliant phoenix feather: 0.0
+  Phoenix feather: 0.0
+  Tattered phoenix feather: 0.0
+  Radiant prophecy stone: 0.0
+  Eggsquisite prophecy stone: 0.0
+  Prophecy stone: 0.0
+  Prophecy stone fragment: 0.0
+  Unsolvable puzzle cube: 0.0
+  Mystical puzzle cube: 0.0
+  Puzzle cube: 0.0
+  Ancient puzzle cube: 0.0
+  Reggference quantum metronome: 0.0
+  Perfect quantum metronome: 0.0
+  Adequate quantum metronome: 0.0
+  Misaligned quantum metronome: 0.0
+  Meggnificent quantum stone: 0.0
+  Phased quantum stone: 0.0
+  Quantum stone: 0.0
+  Quantum stone fragment: 0.0
+  Flawless shell stone: 0.0
+  Eggsquisite shell stone: 0.0
+  Shell stone: 0.0
+  Shell stone fragment: 0.0
+  Eggquisite ship in a bottle: 0.0
+  Complex ship in a bottle: 0.0
+  Detailed ship in a bottle: 0.0
+  Ship in a bottle: 0.0
+  Solar titanium geogon: 0.0
+  Solar titanium bar: 1.0
+  Solar titanium ore: 1.0
+  Radiant soul stone: 0.0
+  Eggsquisite soul stone: 0.0
+  Soul stone: 0.0
+  Soul stone fragment: 0.0
+  Eggceptional tachyon deflector: 0.0
+  Robust tachyon deflector: 0.0
+  Tachyon deflector: 0.0
+  Weak tachyon deflector: 0.0
+  Brilliant tachyon stone: 0.0
+  Eggsquisite tachyon stone: 0.0
+  Tachyon stone: 0.0
+  Tachyon stone fragment: 0.0
+  Radiant Tau Ceti geode: 1.0
+  Glimmering Tau Ceti geode: 1.0
+  Tau Ceti geode piece: 1.0
+  Eggceptional terra stone: 0.0
+  Rich terra stone: 0.0
+  Terra stone: 0.0
+  Terra stone fragment: 0.0
+  Eggceptional chalice: 0.0
+  Jeweled chalice: 0.0
+  Polished chalice: 0.0
+  Plain chalice: 1.0
+  Reggference titanium actuator: 0.0
+  Precise titanium actuator: 0.0
+  Titanium actuator: 0.0
+  Inconsistent titanium actuator: 0.0
+  Brilliant tungsten ankh: 0.0
+  Polished tungsten ankh: 0.0
+  Tungsten ankh: 0.0
+  Crude tungsten ankh: 0.0
+  Prime vial of Martian dust: 0.0
+  Hermetic vial of Martian dust: 0.0
+  Vial of Martian dust: 0.0
+  Tiny vial of Martian dust: 0.0
