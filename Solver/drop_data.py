@@ -24,15 +24,25 @@ RARITY_LABELS = {"COMMON": "Common", "RARE": "Rare", "EPIC": "Epic", "LEGENDARY"
 RARITY_ORDER = ["COMMON", "RARE", "EPIC", "LEGENDARY"]
 
 
-def _load_json(path: Path) -> Any:
-    """Load JSON file, returning empty dict if missing or invalid."""
+def _load_json(path: Path, raise_on_missing: bool = False) -> Any:
+    """Load JSON file, returning empty dict if missing or invalid.
+    
+    Parameters
+    ----------
+    path : Path
+        Path to the JSON file.
+    raise_on_missing : bool
+        If True, raise FileNotFoundError instead of returning empty dict.
+    """
     if not path.exists():
+        if raise_on_missing:
+            raise FileNotFoundError(f"Required data file not found: {path}")
         return {}
     try:
         with path.open("r", encoding="utf-8") as handle:
             return json.load(handle)
-    except json.JSONDecodeError:
-        return {}
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Invalid JSON in {path}: {e}") from e
 
 
 def _build_artifact_metadata() -> tuple[
@@ -259,9 +269,12 @@ def load_cleaned_drops(force_reload: bool = False) -> pd.DataFrame:
     """
     global _CACHED_DROPS_DF
     if _CACHED_DROPS_DF is None or force_reload:
-        payload = _load_json(ALL_DROPS_PATH)
+        payload = _load_json(ALL_DROPS_PATH, raise_on_missing=True)
         if not isinstance(payload, list) or not payload:
-            raise RuntimeError(f"No drop data available in {ALL_DROPS_PATH}")
+            raise RuntimeError(
+                f"No drop data available in {ALL_DROPS_PATH} "
+                f"(got {type(payload).__name__}, expected non-empty list)"
+            )
         raw = pd.DataFrame(payload)
         _CACHED_DROPS_DF = _clean_data(raw)
     return _CACHED_DROPS_DF

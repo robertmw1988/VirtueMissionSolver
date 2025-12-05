@@ -34,6 +34,9 @@ jobs:
 
       - name: Build executable with PyInstaller
         run: |
+          # Clean any previous build artifacts
+          if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
+          if (Test-Path "dist") { Remove-Item -Recurse -Force "dist" }
           pyinstaller virtue_mission_solver.spec --noconfirm
 
       - name: Rename executable with version
