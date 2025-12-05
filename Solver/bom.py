@@ -1158,6 +1158,9 @@ def rollup_missions(
                 m for m in matches
                 if m.target_artifact and target_lower in m.target_artifact.lower()
             ]
+        else:
+            # No target specified - use UNKNOWN target mission (no specific target)
+            matches = [m for m in matches if m.target_artifact == "UNKNOWN"]
         
         if not matches:
             # Try friendly name match
@@ -1177,11 +1180,11 @@ def rollup_missions(
             print(f"Warning: No mission found for {ship}/{duration}/{target}")
             continue
         
-        # Use first match (or aggregate if multiple)
-        for mission in matches:
-            drops = mission.expected_drops(mission_level, capacity_bonus)
-            for art, qty in drops.items():
-                total_drops[art] = total_drops.get(art, 0.0) + qty * count
+        # Use first match only (not all variants)
+        mission = matches[0]
+        drops = mission.expected_drops(mission_level, capacity_bonus)
+        for art, qty in drops.items():
+            total_drops[art] = total_drops.get(art, 0.0) + qty * count
     
     # Use default weights if not provided
     if crafting_weights is None:
@@ -1308,12 +1311,15 @@ def calculate_mission_list_score(
         ]
         
         # Filter by target if specified
-        if target and target.lower() != "any":
+        if target and target.lower() not in ("any", "unknown"):
             target_lower = target.lower()
             matches = [
                 m for m in matches
                 if m.target_artifact and target_lower in m.target_artifact.lower()
             ]
+        else:
+            # No target or 'any'/'unknown' - use UNKNOWN target mission
+            matches = [m for m in matches if m.target_artifact == "UNKNOWN"]
         
         if not matches:
             # Try friendly name match
@@ -1323,22 +1329,24 @@ def calculate_mission_list_score(
                 if m.ship_label.lower() == ship_friendly
                 and m.duration_type.upper() == duration_norm
             ]
-            if target and target.lower() != "any":
+            if target and target.lower() not in ("any", "unknown"):
                 matches = [
                     m for m in matches
                     if m.target_artifact and target_lower in m.target_artifact.lower()
                 ]
+            else:
+                matches = [m for m in matches if m.target_artifact == "UNKNOWN"]
         
         if not matches:
             continue
         
-        # Use first match and aggregate
-        for mission in matches:
-            drops = mission.expected_drops(mission_level, capacity_bonus)
-            for art, qty in drops.items():
-                total_drops[art] = total_drops.get(art, 0.0) + qty * count
-            # Add time (parallel missions would need different calculation)
-            total_time_seconds += mission.seconds * count
+        # Use first match only (not all variants)
+        mission = matches[0]
+        drops = mission.expected_drops(mission_level, capacity_bonus)
+        for art, qty in drops.items():
+            total_drops[art] = total_drops.get(art, 0.0) + qty * count
+        # Add time (parallel missions would need different calculation)
+        total_time_seconds += mission.seconds * count
     
     # Calculate score based on weights
     score = 0.0
