@@ -266,18 +266,15 @@ class MainWindow(QMainWindow):
         splitter.setStretchFactor(1, 1)
         main_layout.addWidget(splitter, stretch=1)
         
-        # Bottom button row
-        button_row = QHBoxLayout()
-        button_row.setSpacing(12)
-        
-        self._solve_btn = QPushButton("Solve")
-        self._solve_btn.setStyleSheet("""
+        # Common button style
+        primary_btn_style = """
             QPushButton {
                 background-color: #3498db;
                 color: white;
                 font-weight: bold;
-                padding: 10px 30px;
+                padding: 8px 20px;
                 border-radius: 4px;
+                min-width: 100px;
             }
             QPushButton:hover {
                 background-color: #2980b9;
@@ -285,32 +282,59 @@ class MainWindow(QMainWindow):
             QPushButton:disabled {
                 background-color: #bdc3c7;
             }
-        """)
-        self._solve_btn.clicked.connect(self._on_solve)
-        button_row.addWidget(self._solve_btn)
-        
-        self._save_btn = QPushButton("Save Config")
-        self._save_btn.clicked.connect(self._on_save_config)
-        button_row.addWidget(self._save_btn)
-        
-        self._save_solution_btn = QPushButton("Save Solution")
-        self._save_solution_btn.setStyleSheet("""
+        """
+        secondary_btn_style = """
+            QPushButton {
+                background-color: #95a5a6;
+                color: white;
+                font-weight: bold;
+                padding: 8px 20px;
+                border-radius: 4px;
+                min-width: 100px;
+            }
+            QPushButton:hover {
+                background-color: #7f8c8d;
+            }
+        """
+        accent_btn_style = """
             QPushButton {
                 background-color: #9b59b6;
                 color: white;
-                padding: 5px 15px;
+                font-weight: bold;
+                padding: 8px 20px;
+                border-radius: 4px;
+                min-width: 100px;
             }
             QPushButton:hover {
                 background-color: #8e44ad;
             }
-        """)
-        self._save_solution_btn.clicked.connect(self._on_save_solution)
-        button_row.addWidget(self._save_solution_btn)
+        """
+        
+        # Bottom button row
+        button_row = QHBoxLayout()
+        button_row.setSpacing(12)
+        
+        # Left side: Solve and Save Config
+        self._solve_btn = QPushButton("Solve")
+        self._solve_btn.setStyleSheet(primary_btn_style)
+        self._solve_btn.clicked.connect(self._on_solve)
+        button_row.addWidget(self._solve_btn)
+        
+        self._save_btn = QPushButton("Save Config")
+        self._save_btn.setStyleSheet(secondary_btn_style)
+        self._save_btn.clicked.connect(self._on_save_config)
+        button_row.addWidget(self._save_btn)
         
         button_row.addStretch()
         
-        # Solution history button
+        # Right side: Save Solution and Solution History
+        self._save_solution_btn = QPushButton("Save Solution")
+        self._save_solution_btn.setStyleSheet(accent_btn_style)
+        self._save_solution_btn.clicked.connect(self._on_save_solution)
+        button_row.addWidget(self._save_solution_btn)
+        
         self._history_btn = QPushButton("📋 Solution History")
+        self._history_btn.setStyleSheet(secondary_btn_style)
         self._history_btn.clicked.connect(self._toggle_history_dock)
         button_row.addWidget(self._history_btn)
         
@@ -723,8 +747,11 @@ class MainWindow(QMainWindow):
                 capacity_bonus=capacity_bonus,
             )
             
-            # Update planner results
-            self._planner_results_widget.set_result(score, total_drops, bom_rollup)
+            # Get fuel totals from mission list widget
+            fuel_by_egg = self._mission_list_widget.get_fuel_totals()
+            
+            # Update planner results (including fuel usage)
+            self._planner_results_widget.set_result(score, total_drops, bom_rollup, fuel_by_egg)
             
             # Switch to planner results tab
             self._results_tabs.setCurrentIndex(1)
@@ -735,6 +762,7 @@ class MainWindow(QMainWindow):
                 "total_drops": total_drops,
                 "bom_rollup": bom_rollup,
                 "missions": self._mission_list_widget.get_mission_list(),
+                "fuel_by_egg": fuel_by_egg,
             }
             
             self._status_bar.showMessage(

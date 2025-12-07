@@ -2,7 +2,7 @@
 Mission list editor widget for the Mission Planner.
 
 Allows users to manually build a list of missions with ship, duration,
-level, target artifact, and count selections.
+level, target artifact, and count selections. Shows running fuel totals.
 """
 from __future__ import annotations
 
@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QMessageBox,
     QAbstractItemView,
+    QFrame,
 )
 
 from ...config import SHIP_METADATA
@@ -31,9 +32,12 @@ from ...mission_data import (
     get_available_targets,
     get_available_durations,
     get_available_levels,
+    get_fuel_requirements,
     MissionOption,
 )
 from ...solution_store import MissionListItem
+from ...aliases import get_egg_display_name
+from .results import FuelUsageWidget, format_fuel_amount
 
 
 class MissionListWidget(QWidget):
@@ -173,6 +177,14 @@ class MissionListWidget(QWidget):
         
         layout.addWidget(self._table, stretch=1)
         
+        # Fuel usage display (running total)
+        fuel_group = QGroupBox("Running Fuel Total")
+        fuel_layout = QVBoxLayout(fuel_group)
+        fuel_layout.setContentsMargins(8, 8, 8, 8)
+        self._fuel_display = FuelUsageWidget(compact=False)
+        fuel_layout.addWidget(self._fuel_display)
+        layout.addWidget(fuel_group)
+        
         # Bottom button row
         btn_row = QHBoxLayout()
         btn_row.setSpacing(8)
@@ -207,6 +219,46 @@ class MissionListWidget(QWidget):
         self._level_spin.valueChanged.connect(self._on_level_changed)
         self._add_btn.clicked.connect(self._on_add_mission)
         self._calc_btn.clicked.connect(self.calculate_requested.emit)
+        # Update fuel display when list changes
+        self.list_changed.connect(self._update_fuel_display)
+    
+    def _update_fuel_display(self) -> None:
+        """Update the running fuel total display."""
+        fuel_totals = self._calculate_fuel_totals()
+        self._fuel_display.set_fuel_dict(fuel_totals)
+    
+    def _calculate_fuel_totals(self) -> Dict[str, float]:
+        """Calculate total fuel usage from current mission list."""
+        totals: Dict[str, float] = {}
+        
+        for row in range(self._table.rowCount()):
+            ship_item = self._table.item(row, 0)
+            duration_item = self._table.item(row, 1)
+            count_item = self._table.item(row, 4)
+            
+            if not all([ship_item, duration_item, count_item]):
+                continue
+            
+            ship = ship_item.data(Qt.ItemDataRole.UserRole)
+            duration = duration_item.data(Qt.ItemDataRole.UserRole)
+            count = int(count_item.text())
+            
+            fuel_reqs = get_fuel_requirements(ship, duration)
+            for egg, amount in fuel_reqs.items():
+                totals[egg] = totals.get(egg, 0) + amount * count
+        
+        return totals
+    
+    def get_fuel_totals(self) -> Dict[str, float]:
+        """
+        Get the current fuel totals for the mission list.
+        
+        Returns
+        -------
+        Dict[str, float]
+            Mapping of egg name to total amount needed
+        """
+        return self._calculate_fuel_totals()
     
     def _load_inventory(self) -> None:
         """Load mission inventory (can be slow, ideally done async)."""
