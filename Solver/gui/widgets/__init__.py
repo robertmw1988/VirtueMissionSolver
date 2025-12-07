@@ -3,7 +3,13 @@
 from .ship_config import ShipConfigWidget, StarRatingWidget
 from .epic_research import EpicResearchWidget
 from .constraints import ConstraintsWidget
-from .results import ResultsWidget, PlannerResultsWidget, ComparisonResultsWidget
+from .results import (
+    ResultsWidget,
+    PlannerResultsWidget,
+    ComparisonResultsWidget,
+    FuelUsageWidget,
+    format_fuel_amount,
+)
 from .artifact_weights import (
     MissionArtifactWeightsWidget,
     CraftedArtifactWeightsWidget,
@@ -30,6 +36,8 @@ __all__ = [
     "ResultsWidget",
     "PlannerResultsWidget",
     "ComparisonResultsWidget",
+    "FuelUsageWidget",
+    "format_fuel_amount",
     "MissionArtifactWeightsWidget",
     "CraftedArtifactWeightsWidget",
     "MissionArtifactCategoryWidget",

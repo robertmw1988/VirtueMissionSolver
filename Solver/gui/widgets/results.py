@@ -5,11 +5,11 @@ Displays solver output including:
 - Mission recommendations table
 - Expected artifact drops
 - BOM rollup (crafting summary)
-- Fuel usage summary
+- Fuel usage summary by egg type
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Dict, Optional
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -26,10 +26,142 @@ from PySide6.QtWidgets import (
     QTextEdit,
     QSplitter,
     QTabWidget,
+    QGridLayout,
 )
 
-from ...mission_solver import SolverResult
+from ...mission_solver import SolverResult, FuelUsage
 from ...bom import RollupResult
+from ...aliases import get_egg_display_name
+
+
+def format_fuel_amount(amount: float) -> str:
+    """Format fuel amount with appropriate suffix (T/B/M)."""
+    if amount >= 1e12:
+        return f"{amount / 1e12:.2f}T"
+    elif amount >= 1e9:
+        return f"{amount / 1e9:.2f}B"
+    elif amount >= 1e6:
+        return f"{amount / 1e6:.2f}M"
+    elif amount >= 1e3:
+        return f"{amount / 1e3:.2f}K"
+    else:
+        return f"{amount:,.0f}"
+
+
+class FuelUsageWidget(QWidget):
+    """
+    Widget displaying fuel usage breakdown by egg type.
+    
+    Shows each virtue egg used with amounts and a total tank usage.
+    """
+    
+    # Egg display order and colors
+    EGG_COLORS = {
+        "HUMILITY": "#B1B1B1",     # Brown
+        "INTEGRITY": "#A3844E",    # Royal Blue
+        "CURIOSITY": "#2A2A2A",    # Dark Orchid
+        "KINDNESS": "#3A5EEF",     # Hot Pink
+        "RESILIENCE": "#EAD84A",   # Forest Green
+    }
+    
+    EGG_ORDER = ["HUMILITY", "INTEGRITY", "CURIOSITY", "KINDNESS", "RESILIENCE"]
+    
+    def __init__(self, compact: bool = False, parent: Optional[QWidget] = None):
+        super().__init__(parent)
+        self._compact = compact
+        self._fuel_labels: Dict[str, QLabel] = {}
+        self._setup_ui()
+    
+    def _setup_ui(self) -> None:
+        """Build the UI layout."""
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+        
+        if not self._compact:
+            # Header
+            header = QLabel("Fuel Usage by Egg")
+            header.setStyleSheet("font-weight: bold; font-size: 12px;")
+            layout.addWidget(header)
+        
+        # Grid for egg amounts - tight layout
+        grid = QGridLayout()
+        grid.setSpacing(4)
+        grid.setContentsMargins(0, 0, 0, 0)
+        # Don't let columns stretch
+        grid.setColumnStretch(0, 0)
+        grid.setColumnStretch(1, 0)
+        
+        row = 0
+        for egg in self.EGG_ORDER:
+            color = self.EGG_COLORS.get(egg, "#666")
+            display_name = get_egg_display_name(egg).replace(" Egg", "")
+            
+            # Egg name label
+            name_label = QLabel(f"{display_name}:")
+            name_label.setStyleSheet(f"color: {color}; font-weight: bold;")
+            
+            # Amount label - fixed width for alignment
+            amount_label = QLabel("-")
+            amount_label.setStyleSheet("font-family: monospace;")
+            amount_label.setMinimumWidth(60)
+            self._fuel_labels[egg] = amount_label
+            
+            grid.addWidget(name_label, row, 0, Qt.AlignmentFlag.AlignLeft)
+            grid.addWidget(amount_label, row, 1, Qt.AlignmentFlag.AlignLeft)
+            row += 1
+        
+        # Wrap grid in a horizontal layout to prevent stretching
+        grid_container = QHBoxLayout()
+        grid_container.setContentsMargins(0, 0, 0, 0)
+        grid_container.addLayout(grid)
+        grid_container.addStretch(1)  # Push everything to the left
+        
+        layout.addLayout(grid_container)
+        
+        if not self._compact:
+            # Tank total
+            self._tank_total_label = QLabel("Tank Total: -")
+            self._tank_total_label.setStyleSheet("font-weight: bold; margin-top: 4px;")
+            layout.addWidget(self._tank_total_label)
+        
+        # Add stretch at bottom to top-align everything
+        layout.addStretch(1)
+    
+    def clear(self) -> None:
+        """Reset all labels."""
+        for label in self._fuel_labels.values():
+            label.setText("-")
+        if hasattr(self, "_tank_total_label"):
+            self._tank_total_label.setText("Tank Total: -")
+    
+    def set_fuel_usage(self, fuel_usage: FuelUsage) -> None:
+        """Update display from FuelUsage object."""
+        for egg in self.EGG_ORDER:
+            amount = fuel_usage.by_egg.get(egg, 0)
+            if amount > 0:
+                self._fuel_labels[egg].setText(format_fuel_amount(amount))
+            else:
+                self._fuel_labels[egg].setText("-")
+        
+        if hasattr(self, "_tank_total_label"):
+            tank_total = fuel_usage.tank_total
+            self._tank_total_label.setText(f"Tank Total: {format_fuel_amount(tank_total)}")
+    
+    def set_fuel_dict(self, fuel_by_egg: Dict[str, float]) -> None:
+        """Update display from a dict of egg -> amount."""
+        for egg in self.EGG_ORDER:
+            amount = fuel_by_egg.get(egg, 0)
+            if amount > 0:
+                self._fuel_labels[egg].setText(format_fuel_amount(amount))
+            else:
+                self._fuel_labels[egg].setText("-")
+        
+        if hasattr(self, "_tank_total_label"):
+            # Tank eggs exclude HUMILITY
+            tank_eggs = {"INTEGRITY", "CURIOSITY", "KINDNESS", "RESILIENCE"}
+            tank_total = sum(fuel_by_egg.get(e, 0) for e in tank_eggs)
+            self._tank_total_label.setText(f"Tank Total: {format_fuel_amount(tank_total)}")
 
 
 class MissionTableWidget(QWidget):
@@ -378,6 +510,10 @@ class ResultsWidget(QWidget):
         self._drops_table = DropsTableWidget()
         self._tabs.addTab(self._drops_table, "Drops")
         
+        # Fuel tab
+        self._fuel_widget = FuelUsageWidget(compact=False)
+        self._tabs.addTab(self._fuel_widget, "Fuel")
+        
         # BOM Rollup tab
         self._bom_widget = BOMRollupWidget()
         self._tabs.addTab(self._bom_widget, "BOM Rollup")
@@ -389,6 +525,7 @@ class ResultsWidget(QWidget):
         self._summary.clear()
         self._missions_table.clear()
         self._drops_table.clear()
+        self._fuel_widget.clear()
         self._bom_widget.clear()
     
     def set_running(self) -> None:
@@ -400,6 +537,7 @@ class ResultsWidget(QWidget):
         self._summary.set_result(result, fuel_capacity)
         self._missions_table.set_results(result)
         self._drops_table.set_drops(result.total_drops)
+        self._fuel_widget.set_fuel_usage(result.fuel_usage)
         self._bom_widget.set_rollup(result.bom_rollup)
 
 
@@ -408,7 +546,7 @@ class PlannerResultsWidget(QWidget):
     Results display for Mission Planner calculations.
     
     Similar to ResultsWidget but adapted for manual mission list calculations
-    (no solver status, different summary format).
+    (no solver status, different summary format). Includes fuel usage breakdown.
     """
     
     def __init__(self, parent: Optional[QWidget] = None):
@@ -438,6 +576,10 @@ class PlannerResultsWidget(QWidget):
         self._drops_table = DropsTableWidget()
         self._tabs.addTab(self._drops_table, "Expected Drops")
         
+        # Fuel tab
+        self._fuel_widget = FuelUsageWidget(compact=False)
+        self._tabs.addTab(self._fuel_widget, "Fuel")
+        
         # BOM Rollup tab
         self._bom_widget = BOMRollupWidget()
         self._tabs.addTab(self._bom_widget, "BOM Rollup")
@@ -449,6 +591,7 @@ class PlannerResultsWidget(QWidget):
         self._score_label.setText("Score: -")
         self._drops_count_label.setText("Total Drops: -")
         self._drops_table.clear()
+        self._fuel_widget.clear()
         self._bom_widget.clear()
     
     def set_result(
@@ -456,6 +599,7 @@ class PlannerResultsWidget(QWidget):
         score: float,
         total_drops: dict[str, float],
         bom_rollup,
+        fuel_by_egg: Optional[Dict[str, float]] = None,
     ) -> None:
         """Update displays from calculation results."""
         self._score_label.setText(f"Score: {score:.2f}")
@@ -464,6 +608,12 @@ class PlannerResultsWidget(QWidget):
         self._drops_count_label.setText(f"Total Drops: {total_drop_count:.1f} items")
         
         self._drops_table.set_drops(total_drops)
+        
+        if fuel_by_egg:
+            self._fuel_widget.set_fuel_dict(fuel_by_egg)
+        else:
+            self._fuel_widget.clear()
+        
         self._bom_widget.set_rollup(bom_rollup)
 
 
