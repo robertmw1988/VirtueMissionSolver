@@ -41,6 +41,7 @@ class Constraints:
     fuel_tank_capacity: float = 500.0  # in trillions
     max_time_hours: float = 336.0
     max_missions_per_type: int = 0  # Max runs of any single mission type (0 = unlimited). Forces mission diversity.
+    min_sample_drops: int = 0  # Minimum observed drops to include mission (0 = no filter). Filters out missions with insufficient data.
 
 
 @dataclass
@@ -123,6 +124,7 @@ def load_config(path: Optional[Path] = None) -> UserConfig:
         fuel_tank_capacity=_parse_unit_value(constraints_raw.get("fuelTankCapacity", 500)),
         max_time_hours=float(constraints_raw.get("maxTime", 336)),
         max_missions_per_type=int(constraints_raw.get("maxMissionsPerType", 0)),
+        min_sample_drops=int(constraints_raw.get("minSampleDrops", 0)),
     )
 
     # Cost weights
@@ -240,6 +242,7 @@ def save_config(config: UserConfig, path: Optional[Path] = None) -> None:
     data["constraints"] = {
         "fuelTankCapacity": _format_unit_value(config.constraints.fuel_tank_capacity),
         "maxTime": config.constraints.max_time_hours,
+        "minSampleDrops": config.constraints.min_sample_drops,
     }
     
     # Cost function weights

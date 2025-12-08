@@ -51,7 +51,20 @@ class MissionOption:
     seconds: int
     drop_vector: Dict[str, float] = field(default_factory=dict)
     fuel_requirements: Dict[str, int] = field(default_factory=dict)  # {egg_name: amount}
+    total_sample_drops: int = 0  # Total drops observed in sample data for statistical significance
     _cached_drop_ratios: Optional[Dict[str, float]] = field(default=None, repr=False)
+
+    @property
+    def estimated_missions_in_sample(self) -> int:
+        """Estimate how many missions contributed to the sample data."""
+        if self.base_capacity <= 0:
+            return 0
+        return max(1, self.total_sample_drops // self.base_capacity)
+
+    @property
+    def has_sufficient_data(self) -> bool:
+        """Check if this mission has minimum data for reliability (100+ drops)."""
+        return self.total_sample_drops >= 100
 
     def effective_capacity(
         self,
@@ -212,7 +225,8 @@ def build_mission_inventory(allowed_ships: Optional[Dict[str, int]] = None) -> L
 
     drops_df = _get_drops_df()
     index_cols = ["Ship", "Duration", "Level", "Target Artifact"]
-    artifact_cols = [c for c in drops_df.columns if c not in index_cols]
+    # Exclude internal columns like _total_drops from artifact columns
+    artifact_cols = [c for c in drops_df.columns if c not in index_cols and not c.startswith("_")]
 
     inventory: List[MissionOption] = []
 
@@ -255,6 +269,7 @@ def build_mission_inventory(allowed_ships: Optional[Dict[str, int]] = None) -> L
                         seconds=seconds,
                         drop_vector={},
                         fuel_requirements=fuel_reqs,
+                        total_sample_drops=0,
                     )
                 )
                 continue
@@ -264,6 +279,11 @@ def build_mission_inventory(allowed_ships: Optional[Dict[str, int]] = None) -> L
                 target = row.get("Target Artifact")
                 drop_vec = {col: float(row[col]) for col in artifact_cols if row[col] != 0}
                 fuel_reqs = get_fuel_requirements(ship_api, dur_type)
+                # Get total sample drops for statistical significance
+                if "_total_drops" in row:
+                    total_drops = int(row.get("_total_drops", 0))
+                else:
+                    total_drops = int(sum(float(v) for v in drop_vec.values()))
                 inventory.append(
                     MissionOption(
                         ship=ship_api,
@@ -276,6 +296,7 @@ def build_mission_inventory(allowed_ships: Optional[Dict[str, int]] = None) -> L
                         seconds=seconds,
                         drop_vector=drop_vec,
                         fuel_requirements=fuel_reqs,
+                        total_sample_drops=int(total_drops),
                     )
                 )
 
@@ -290,6 +311,66 @@ def filter_inventory_by_level(
     In Egg Inc, once you unlock a higher mission level, lower levels are no longer available.
     """
     return [m for m in inventory if m.level == ship_levels.get(m.ship, 0)]
+
+
+def filter_inventory_by_sample_size(
+    inventory: List[MissionOption],
+    min_sample_drops: int = 100,
+) -> List[MissionOption]:
+    """
+    Filter out missions with insufficient observed drop data.
+    
+    This is a data quality filter - missions with very few observations
+    may have unreliable drop rate estimates due to small sample noise.
+    
+    Parameters
+    ----------
+    inventory : List[MissionOption]
+        List of mission options to filter
+    min_sample_drops : int
+        Minimum number of drops required in observed data.
+        Default 100 filters out very sparse data.
+        Use 0 to disable filtering.
+    
+    Returns
+    -------
+    List[MissionOption]
+        Filtered list with only missions meeting the data threshold.
+    """
+    if min_sample_drops <= 0:
+        return inventory
+    return [m for m in inventory if m.total_sample_drops >= min_sample_drops]
+
+
+def get_missions_by_data_threshold(
+    inventory: List[MissionOption],
+    min_sample_drops: int = 100,
+) -> tuple[List[MissionOption], List[MissionOption]]:
+    """
+    Partition missions into sufficient and insufficient data groups.
+    
+    Parameters
+    ----------
+    inventory : List[MissionOption]
+        List of mission options
+    min_sample_drops : int
+        Minimum observed drops threshold
+    
+    Returns
+    -------
+    tuple[List[MissionOption], List[MissionOption]]
+        (sufficient_data_missions, insufficient_data_missions)
+    """
+    sufficient = []
+    insufficient = []
+    
+    for mission in inventory:
+        if mission.total_sample_drops >= min_sample_drops:
+            sufficient.append(mission)
+        else:
+            insufficient.append(mission)
+    
+    return sufficient, insufficient
 
 
 def compute_research_bonuses(epic_researches: Dict[str, Any]) -> tuple[float, float]:

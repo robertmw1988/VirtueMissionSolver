@@ -338,5 +338,108 @@ def _clean_data(df: pd.DataFrame) -> pd.DataFrame:
     artifact_headers = [col for col in pivot.columns if col not in index_columns]
     ordered_artifacts = sorted(artifact_headers, key=_artifact_column_sort_key)
     pivot = pivot[index_columns + ordered_artifacts]
+    
+    # Calculate total drops per mission type for statistical significance
+    pivot["_total_drops"] = pivot[ordered_artifacts].sum(axis=1)
 
     return pivot
+
+
+# ---------------------------------------------------------------------------
+# Sample count / statistical significance support
+# ---------------------------------------------------------------------------
+_CACHED_SAMPLE_COUNTS: Optional[pd.DataFrame] = None
+
+
+def load_sample_counts(force_reload: bool = False) -> pd.DataFrame:
+    """
+    Load sample counts per mission type.
+    
+    Returns a DataFrame with Ship, Duration, Level, Target Artifact,
+    and _total_drops columns showing how many drops have been recorded
+    for each mission configuration.
+    
+    Parameters
+    ----------
+    force_reload : bool
+        If True, reload from disk even if cached.
+    
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with mission type identifiers and total drop counts.
+    """
+    global _CACHED_SAMPLE_COUNTS
+    if _CACHED_SAMPLE_COUNTS is None or force_reload:
+        drops_df = load_cleaned_drops(force_reload)
+        index_columns = ["Ship", "Duration", "Level", "Target Artifact"]
+        _CACHED_SAMPLE_COUNTS = drops_df[index_columns + ["_total_drops"]].copy()
+    return _CACHED_SAMPLE_COUNTS
+
+
+def get_mission_sample_count(
+    ship: str,
+    duration: str,
+    level: int,
+    target_artifact: Optional[str],
+) -> int:
+    """
+    Get the total drop count for a specific mission configuration.
+    
+    Parameters
+    ----------
+    ship : str
+        Ship label (e.g., "Henerprise")
+    duration : str
+        Duration label (e.g., "Epic")
+    level : int
+        Mission level
+    target_artifact : Optional[str]
+        Target artifact name, or None for "Any"
+    
+    Returns
+    -------
+    int
+        Total number of drops recorded for this mission type.
+        Returns 0 if no data available.
+    """
+    counts_df = load_sample_counts()
+    
+    mask = (
+        (counts_df["Ship"] == ship) &
+        (counts_df["Duration"] == duration) &
+        (counts_df["Level"] == level)
+    )
+    
+    if target_artifact:
+        mask &= (counts_df["Target Artifact"] == target_artifact)
+    else:
+        mask &= counts_df["Target Artifact"].isna()
+    
+    matched = counts_df.loc[mask, "_total_drops"]
+    if matched.empty:
+        return 0
+    return int(matched.iloc[0])
+
+
+def get_all_sample_counts() -> Dict[tuple, int]:
+    """
+    Get sample counts for all mission types as a dictionary.
+    
+    Returns
+    -------
+    Dict[tuple, int]
+        Mapping of (ship, duration, level, target_artifact) -> total_drops
+    """
+    counts_df = load_sample_counts()
+    result = {}
+    for _, row in counts_df.iterrows():
+        key = (
+            row["Ship"],
+            row["Duration"],
+            int(row["Level"]),
+            row["Target Artifact"] if pd.notna(row["Target Artifact"]) else None,
+        )
+        result[key] = int(row["_total_drops"])
+    return result
+

@@ -278,6 +278,123 @@ class NumShipsWidget(QWidget):
         self._spinbox.setValue(val)
 
 
+# Minimum data threshold presets for filtering missions with insufficient observations
+DATA_THRESHOLD_PRESETS = {
+    "No Filter": 0,
+    "100+ drops (minimal)": 100,
+    "500+ drops (moderate)": 500,
+    "1000+ drops (good)": 1000,
+    "5000+ drops (extensive)": 5000,
+    "Custom": -1,  # Sentinel for custom input
+}
+
+
+class DataThresholdWidget(QWidget):
+    """
+    Widget for configuring minimum data threshold.
+    
+    Allows users to filter out mission types that don't have enough
+    observed drop data to be reliable. This is a data quality filter,
+    not a statistical significance measure.
+    
+    Signals:
+        value_changed(int): Emitted when minimum drops changes
+    """
+    
+    value_changed = Signal(int)
+    
+    def __init__(
+        self,
+        initial_value: int = 0,
+        parent: Optional[QWidget] = None,
+    ):
+        super().__init__(parent)
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        
+        # Label
+        label = QLabel("Minimum Data Threshold")
+        label.setStyleSheet("font-weight: bold;")
+        layout.addWidget(label)
+        
+        # Description
+        desc = QLabel("Exclude missions with too few observed drops")
+        desc.setStyleSheet("color: #666; font-size: 10px;")
+        layout.addWidget(desc)
+        
+        # Input row
+        input_row = QHBoxLayout()
+        input_row.setSpacing(8)
+        
+        # Preset dropdown
+        self._preset_combo = QComboBox()
+        for name in DATA_THRESHOLD_PRESETS:
+            self._preset_combo.addItem(name)
+        self._preset_combo.currentTextChanged.connect(self._on_preset_changed)
+        input_row.addWidget(self._preset_combo)
+        
+        # Custom input
+        self._custom_spin = QSpinBox()
+        self._custom_spin.setRange(0, 100000)
+        self._custom_spin.setSuffix(" drops")
+        self._custom_spin.setValue(initial_value)
+        self._custom_spin.setFixedWidth(120)
+        self._custom_spin.valueChanged.connect(self._on_custom_changed)
+        input_row.addWidget(self._custom_spin)
+        
+        input_row.addStretch()
+        layout.addLayout(input_row)
+        
+        # Set initial state
+        self._set_value_silently(initial_value)
+    
+    def _set_value_silently(self, value: int) -> None:
+        """Set value without emitting signals."""
+        self._custom_spin.blockSignals(True)
+        self._preset_combo.blockSignals(True)
+        
+        self._custom_spin.setValue(value)
+        
+        # Find matching preset
+        preset_found = False
+        for name, preset_val in DATA_THRESHOLD_PRESETS.items():
+            if preset_val == value:
+                self._preset_combo.setCurrentText(name)
+                self._custom_spin.setEnabled(name == "Custom")
+                preset_found = True
+                break
+        
+        if not preset_found:
+            self._preset_combo.setCurrentText("Custom")
+            self._custom_spin.setEnabled(True)
+        
+        self._custom_spin.blockSignals(False)
+        self._preset_combo.blockSignals(False)
+    
+    @property
+    def value(self) -> int:
+        return self._custom_spin.value()
+    
+    @value.setter
+    def value(self, val: int) -> None:
+        self._set_value_silently(val)
+        self.value_changed.emit(val)
+    
+    def _on_preset_changed(self, text: str) -> None:
+        preset_val = DATA_THRESHOLD_PRESETS.get(text, -1)
+        if preset_val >= 0:
+            self._custom_spin.setEnabled(False)
+            self._custom_spin.setValue(preset_val)
+            self.value_changed.emit(preset_val)
+        else:
+            self._custom_spin.setEnabled(True)
+    
+    def _on_custom_changed(self, value: int) -> None:
+        self.value_changed.emit(value)
+
+
 class ConstraintsWidget(QWidget):
     """
     Combined widget for all solver constraints.
@@ -324,6 +441,11 @@ class ConstraintsWidget(QWidget):
         self._time_budget.value_changed.connect(self._on_changed)
         layout.addWidget(self._time_budget)
         
+        # Minimum data threshold filter
+        self._data_threshold = DataThresholdWidget(initial_value=config.constraints.min_sample_drops)
+        self._data_threshold.value_changed.connect(self._on_changed)
+        layout.addWidget(self._data_threshold)
+        
         layout.addStretch()
     
     def _on_changed(self, *args) -> None:
@@ -335,6 +457,7 @@ class ConstraintsWidget(QWidget):
         return Constraints(
             fuel_tank_capacity=self._fuel_tank.value,
             max_time_hours=self._time_budget.hours,
+            min_sample_drops=self._data_threshold.value,
         )
     
     def get_num_ships(self) -> int:
@@ -345,4 +468,5 @@ class ConstraintsWidget(QWidget):
         """Update all constraints from a UserConfig."""
         self._fuel_tank.value = user_config.constraints.fuel_tank_capacity
         self._time_budget.hours = user_config.constraints.max_time_hours
+        self._data_threshold.value = user_config.constraints.min_sample_drops
         self._num_ships.value = num_ships

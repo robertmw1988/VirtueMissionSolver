@@ -18,6 +18,7 @@ from .mission_data import (
     build_mission_inventory,
     compute_research_bonuses,
     filter_inventory_by_level,
+    filter_inventory_by_sample_size,
 )
 from .solver_logging import LogLevel, SolverLogger, create_logger
 
@@ -582,7 +583,18 @@ def solve(
     # Build mission inventory filtered by user's unlocked levels
     full_inventory = build_mission_inventory(allowed_ships=config.missions)
     inventory = filter_inventory_by_level(full_inventory, config.missions)
+    
+    # Apply minimum data threshold filter if configured
+    if config.constraints.min_sample_drops > 0:
+        pre_filter_count = len(inventory)
+        inventory = filter_inventory_by_sample_size(inventory, config.constraints.min_sample_drops)
+        excluded_count = pre_filter_count - len(inventory)
+        if excluded_count > 0:
+            logger._log(LogLevel.SUMMARY, "FILTER", 
+                        f"Excluded {excluded_count} missions with < {config.constraints.min_sample_drops} observed drops")
+    
     logger.log_inventory_built(len(full_inventory), len(inventory))
+
 
     if not inventory:
         logger._log(LogLevel.MINIMAL, "SOLVER", "No missions available - returning empty result")

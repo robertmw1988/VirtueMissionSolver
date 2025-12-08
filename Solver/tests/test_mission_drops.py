@@ -14,6 +14,8 @@ from Solver.mission_data import (
     MissionOption,
     build_mission_inventory,
     filter_inventory_by_level,
+    filter_inventory_by_sample_size,
+    get_missions_by_data_threshold,
     FTL_SHIPS,
 )
 
@@ -271,6 +273,103 @@ class TestExpectedDrops:
         drops_200 = m.expected_drops(10, 0.0)
         assert drops_200["Artifact A"] == pytest.approx(100.0)
         assert drops_200["Artifact B"] == pytest.approx(100.0)
+
+
+# ---------------------------------------------------------------------------
+# Tests: Data threshold filtering
+# ---------------------------------------------------------------------------
+
+class TestDataThresholdFiltering:
+    """Test minimum data threshold filtering of missions."""
+
+    def test_missions_have_sample_counts(self, full_inventory: list[MissionOption]):
+        """Verify missions have total_sample_drops populated."""
+        # At least some missions should have sample data
+        with_samples = [m for m in full_inventory if m.total_sample_drops > 0]
+        assert len(with_samples) > 0, "No missions have sample data"
+        
+        # Check that sample counts are reasonable
+        max_samples = max(m.total_sample_drops for m in full_inventory)
+        assert max_samples > 1000, f"Max samples too low: {max_samples}"
+
+    def test_filter_by_sample_size_reduces_inventory(self, full_inventory: list[MissionOption]):
+        """Filtering should reduce inventory size."""
+        filtered = filter_inventory_by_sample_size(full_inventory, min_sample_drops=1000)
+        assert len(filtered) < len(full_inventory), "Filter did not reduce inventory"
+        assert len(filtered) > 0, "Filter removed all missions"
+
+    def test_filter_with_zero_threshold_returns_all(self, full_inventory: list[MissionOption]):
+        """Zero threshold should return all missions."""
+        filtered = filter_inventory_by_sample_size(full_inventory, min_sample_drops=0)
+        assert len(filtered) == len(full_inventory)
+
+    def test_filtered_missions_meet_threshold(self, full_inventory: list[MissionOption]):
+        """All filtered missions should meet the threshold."""
+        threshold = 500
+        filtered = filter_inventory_by_sample_size(full_inventory, min_sample_drops=threshold)
+        for m in filtered:
+            assert m.total_sample_drops >= threshold, (
+                f"{m.ship_label} {m.duration_type} L{m.level} has only "
+                f"{m.total_sample_drops} samples, expected >= {threshold}"
+            )
+
+    def test_partition_missions_by_data_threshold(self, full_inventory: list[MissionOption]):
+        """Test get_missions_by_data_threshold partitioning."""
+        threshold = 1000
+        sufficient, insufficient = get_missions_by_data_threshold(full_inventory, threshold)
+        
+        # All missions should be in one group or the other
+        assert len(sufficient) + len(insufficient) == len(full_inventory)
+        
+        # Check partition is correct
+        for m in sufficient:
+            assert m.total_sample_drops >= threshold
+        for m in insufficient:
+            assert m.total_sample_drops < threshold
+
+    def test_has_sufficient_data_property(self):
+        """Test the has_sufficient_data property."""
+        low_data = MissionOption(
+            ship="TEST",
+            ship_label="Test",
+            duration_type="SHORT",
+            level=0,
+            target_artifact=None,
+            base_capacity=50,
+            level_capacity_bump=5,
+            seconds=3600,
+            drop_vector={"A": 10},
+            total_sample_drops=50,
+        )
+        assert not low_data.has_sufficient_data
+        
+        high_data = MissionOption(
+            ship="TEST",
+            ship_label="Test",
+            duration_type="SHORT",
+            level=0,
+            target_artifact=None,
+            base_capacity=50,
+            level_capacity_bump=5,
+            seconds=3600,
+            drop_vector={"A": 1000},
+            total_sample_drops=1000,
+        )
+        assert high_data.has_sufficient_data
+
+    def test_estimated_missions_in_sample(self, full_inventory: list[MissionOption]):
+        """Test mission count estimation from sample data."""
+        # Find a mission with good data
+        high_data_missions = [m for m in full_inventory if m.total_sample_drops > 10000]
+        if not high_data_missions:
+            pytest.skip("No high-data missions found")
+        
+        m = high_data_missions[0]
+        estimated = m.estimated_missions_in_sample
+        
+        # Should be reasonable (positive and less than total drops)
+        assert estimated > 0
+        assert estimated < m.total_sample_drops
 
 
 # ---------------------------------------------------------------------------
