@@ -37,7 +37,7 @@ jobs:
       - name: Fetch latest game data
         working-directory: FetchData
         run: |
-          python FetchAllShipData.py --no-summary -o egginc_data_All.json
+          python FetchAllShipData.py --no-summary --timeout 600 -o egginc_data_All.json
           echo "Data fetch completed at $(date -u)"
 
       - name: Compress data file
